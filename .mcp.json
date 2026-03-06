@@ -5,7 +5,7 @@
       "args": ["dist/index.js"],
       "cwd": "C:\\Users\\mathv\\PhpstormProjects\\perso\\mcp-glm",
       "env": {
-        "GLM_API_KEY": "e51833ccdf8d4125999092f4e87835c9.aJzLVghxMqzhiSf8"
+        "GLM_API_KEY": " "
       }
     }
   }
