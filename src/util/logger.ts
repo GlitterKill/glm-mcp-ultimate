@@ -25,7 +25,7 @@ export class Logger {
 
   constructor(options: LoggerOptions = {}) {
     this.level = options.level ?? "info";
-    this.name = options.name ?? "mcp-glm";
+    this.name = options.name ?? "glm-mcp-ultimate";
     this.output = options.output ?? defaultOutput;
   }
 

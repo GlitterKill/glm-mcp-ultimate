@@ -22,7 +22,7 @@ const client = new GlmClient(apiKey);
 const DEFAULT_MODEL = process.env.GLM_MODEL || "glm-5";
 
 const server = new McpServer({
-  name: "mcp-glm",
+  name: "glm-mcp-ultimate",
   version: "1.0.0",
 });
 
@@ -305,7 +305,7 @@ async function main() {
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("MCP GLM server started");
+  console.error("GLM MCP Ultimate server started");
 }
 
 main().catch((err) => {

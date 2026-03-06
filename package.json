@@ -1,7 +1,7 @@
 {
-  "name": "mcp-glm",
+  "name": "glm-mcp-ultimate",
   "version": "1.0.0",
-  "description": "MCP server for GLM (Zhipu AI) agent - allows Claude Code to delegate tasks to GLM",
+  "description": "GLM MCP Ultimate - Allows Claude Code to delegate tasks to GLM (Zhipu AI) agents",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {

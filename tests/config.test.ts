@@ -18,7 +18,7 @@ describe("Config Module", () => {
     });
 
     it("should have correct default server config", () => {
-      expect(DEFAULT_CONFIG.server.name).toBe("mcp-glm");
+      expect(DEFAULT_CONFIG.server.name).toBe("glm-mcp-ultimate");
       expect(DEFAULT_CONFIG.server.version).toBe("2.0.0");
       expect(DEFAULT_CONFIG.server.logLevel).toBe("info");
     });
@@ -237,7 +237,7 @@ describe("Config Module", () => {
         {}
       );
       expect(merged.server.logLevel).toBe("debug");
-      expect(merged.server.name).toBe("mcp-glm");
+      expect(merged.server.name).toBe("glm-mcp-ultimate");
     });
 
     it("should override base with override", () => {

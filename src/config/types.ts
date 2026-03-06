@@ -42,7 +42,7 @@ export interface AppConfig {
 
 export const DEFAULT_CONFIG: Omit<AppConfig, "auth"> = {
   server: {
-    name: "mcp-glm",
+    name: "glm-mcp-ultimate",
     version: "2.0.0",
     logLevel: "info",
   },

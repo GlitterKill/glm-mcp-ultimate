@@ -1,11 +1,12 @@
-# MCP GLM Server
+# GLM MCP Ultimate Server
 
-The MCP GLM server allows Claude Code and other MCP-compatible clients to utilize GLM (Zhipu AI) models. It provides an autonomous coding agent, chat capabilities, image analysis, and text embeddings.
+The GLM MCP Ultimate server allows Claude Code and other MCP-compatible clients to utilize GLM (Zhipu AI) models. It provides an autonomous coding agent, chat capabilities, image analysis, and text embeddings.
 
 ## Features
 
 - **Autonomous Coding Agent**: Start a session where GLM works on a task by reading, writing, and editing files, and running shell commands.
 - **GLM Chat**: Send direct prompts to GLM models for quick questions or second opinions.
+- **GLM Vision**: Analyze images using GLM-4V by providing a URL or base64 data.
 - **GLM Vision**: Analyze images using GLM-4V by providing a URL or base64 data.
 - **GLM Embeddings**: Generate high-quality text embeddings for search and retrieval tasks.
 - **SQLite Persistence**: Robust storage for sessions, messages, and agent steps.
@@ -21,8 +22,8 @@ The MCP GLM server allows Claude Code and other MCP-compatible clients to utiliz
 
 1. Clone the repository:
    ```cmd
-   git clone https://github.com/your-repo/mcp-glm-ultimate.git
-   cd mcp-glm-ultimate
+   git clone https://github.com/your-repo/glm-mcp-ultimate.git
+   cd glm-mcp-ultimate
    ```
 2. Install dependencies:
    ```cmd
@@ -41,8 +42,8 @@ The MCP GLM server allows Claude Code and other MCP-compatible clients to utiliz
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-repo/mcp-glm-ultimate.git
-   cd mcp-glm-ultimate
+   git clone https://github.com/your-repo/glm-mcp-ultimate.git
+   cd glm-mcp-ultimate
    ```
 2. Install dependencies:
    ```bash
