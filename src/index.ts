@@ -33,10 +33,11 @@ async function startMcpServer() {
   // --- Agent tools ---
 
   server.tool(
-    "glm_agent_start",
-    "Start a new GLM agent session. GLM will autonomously work on the given task by reading/writing files and running commands. Returns a session_id to use with glm_agent_step.",
+    "glm_run_task",
+    "Execute a single, focused task using a fresh GLM session. This prevents context pollution across tasks. GLM will run autonomously up to a maximum number of steps to complete the task, then return findings back to you. Use this for individual tasks.",
     {
-      task: z.string().describe("Description of the task for GLM to accomplish"),
+      task: z.string().describe("The specific task for GLM to execute"),
+      context: z.string().optional().describe("Relevant context or findings from previous tasks"),
       working_dir: z
         .string()
         .optional()
@@ -45,131 +46,55 @@ async function startMcpServer() {
         .string()
         .optional()
         .describe(`GLM model to use (default: ${DEFAULT_MODEL})`),
+      max_steps: z
+        .number()
+        .optional()
+        .describe("Maximum number of tool-use steps (default: 5)"),
     },
-    async ({ task, working_dir, model }) => {
+    async ({ task, context, working_dir, model, max_steps }) => {
       const workingDir = working_dir || process.cwd();
-      const session = createSession(task, workingDir, model || DEFAULT_MODEL);
+      const prompt = context ? `Context:\n${context}\n\nTask: ${task}` : `Task: ${task}`;
+      const session = createSession(prompt, workingDir, model || DEFAULT_MODEL);
+      const limit = max_steps || 5;
+
+      const stepsTaken: any[] = [];
+      let finalResult = "";
+
+      for (let i = 0; i < limit; i++) {
+        const result = await executeStep(session, client);
+        stepsTaken.push({ action: result.action, status: result.status });
+        
+        if (result.status === "completed") {
+          finalResult = result.details;
+          break;
+        } else if (result.status === "error") {
+          finalResult = `Error during execution: ${result.details}`;
+          break;
+        }
+      }
+
+      if (session.status === "running" || session.status === "ready") {
+        finalResult = `Task did not complete within the maximum number of steps (${limit}). Last action: ${stepsTaken[stepsTaken.length - 1]?.action}`;
+        session.status = "error";
+      }
+
+      // Cleanup the session to save memory and avoid polluting long-term context
+      deleteSession(session.id);
+
       return {
         content: [
           {
             type: "text",
             text: JSON.stringify(
               {
-                session_id: session.id,
-                status: "ready",
-                task: session.task,
-                model: session.model,
-                working_dir: session.workingDir,
+                task_result: finalResult,
+                steps_taken: stepsTaken.length,
+                status: session.status,
+                token_usage: session.tokenUsage,
               },
               null,
               2
             ),
-          },
-        ],
-      };
-    }
-  );
-
-  server.tool(
-    "glm_agent_step",
-    "Execute the next step of a GLM agent session. GLM will decide what action to take (read file, edit file, run command, etc.) and execute it. Call this repeatedly until status is 'completed'.",
-    {
-      session_id: z.string().describe("The session ID from glm_agent_start"),
-    },
-    async ({ session_id }) => {
-      const session = getSession(session_id);
-      if (!session) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Error: Session not found: ${session_id}`,
-            },
-          ],
-          isError: true,
-        };
-      }
-
-      if (session.status === "completed") {
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(
-                {
-                  status: "completed",
-                  message: "Session already completed",
-                  total_steps: session.steps.length,
-                },
-                null,
-                2
-              ),
-            },
-          ],
-        };
-      }
-
-      const result = await executeStep(session, client);
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(
-              {
-                session_id: session.id,
-                step_number: session.steps.length,
-                action: result.action,
-                details: result.details,
-                status: result.status,
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      };
-    }
-  );
-
-  server.tool(
-    "glm_agent_stop",
-    "Stop a GLM agent session and get a summary of all actions taken.",
-    {
-      session_id: z.string().describe("The session ID to stop"),
-    },
-    async ({ session_id }) => {
-      const session = getSession(session_id);
-      if (!session) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Error: Session not found: ${session_id}`,
-            },
-          ],
-          isError: true,
-        };
-      }
-
-      const summary = {
-        session_id: session.id,
-        task: session.task,
-        status: session.status,
-        total_steps: session.steps.length,
-        steps: session.steps.map((s, i) => ({
-          step: i + 1,
-          action: s.action,
-          result_preview: s.result.substring(0, 200),
-        })),
-      };
-
-      deleteSession(session_id);
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(summary, null, 2),
           },
         ],
       };

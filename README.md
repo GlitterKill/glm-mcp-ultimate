@@ -4,7 +4,7 @@ The GLM MCP Ultimate server allows Claude Code and other MCP-compatible clients 
 
 ## Features
 
-- **Autonomous Coding Agent**: Start a session where GLM works on a task by reading, writing, and editing files, and running shell commands.
+- **Focused Task Execution**: Run GLM as a sub-agent to autonomously complete specific tasks within a fresh, isolated context before returning findings to the orchestrator.
 - **GLM Chat**: Send direct prompts to GLM models for quick questions or second opinions.
 - **GLM Vision**: Analyze images using GLM-4V by providing a URL or base64 data.
 - **GLM Embeddings**: Generate high-quality text embeddings for search and retrieval tasks.
@@ -82,9 +82,7 @@ Add the following entry to the `mcpServers` object:
 
 ### Autonomous Agent
 
-- `glm_agent_start`: Initialize a new agent session for a specific task.
-- `glm_agent_step`: Execute the next action in an active session. Call this repeatedly until the task completes.
-- `glm_agent_stop`: Terminate a session and retrieve a summary of actions taken.
+- `glm_run_task`: Execute a single, focused task using a fresh GLM session. This tool minimizes context pollution by spawning a new session per task, operating autonomously up to a specified step limit, and returning findings directly to the orchestrating LLM.
 
 ### General Tools
 
