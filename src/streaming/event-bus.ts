@@ -25,7 +25,9 @@ class EventBus extends EventEmitter {
 
   emit<T extends FeedbackEvent>(event: T): boolean {
     this.eventCounts[event.type] = (this.eventCounts[event.type] || 0) + 1;
-    return super.emit(event.type, event);
+    const result = super.emit(event.type, event);
+    super.emit("*", event);
+    return result;
   }
 
   on<T extends FeedbackEvent>(

@@ -1,4 +1,4 @@
-import { execSync, spawn } from "child_process";
+import { execSync, spawn, spawnSync } from "child_process";
 import {
   readdirSync,
   readFileSync,
@@ -233,8 +233,14 @@ export function runCommand(
   const mergedEnv = { ...process.env, ...env };
 
   try {
-    const stdout = execSync(
-      args.length > 0 ? `${command} ${args.map(escapeArg).join(" ")}` : command,
+    const finalCommand = shell && args.length > 0 
+      ? `${command} ${args.map(escapeArg).join(" ")}` 
+      : command;
+    const finalArgs = shell ? [] : args;
+
+    const result = spawnSync(
+      finalCommand,
+      finalArgs,
       {
         cwd,
         timeout,
@@ -242,16 +248,24 @@ export function runCommand(
         env: mergedEnv,
         shell,
         encoding: "utf-8",
-        stdio: ["pipe", "pipe", "pipe"],
         windowsHide: true,
       }
     );
 
+    if (result.error) {
+      return {
+        stdout: result.stdout?.toString() || "",
+        stderr: result.stderr?.toString() || result.error.message || "",
+        exitCode: (result.error as any).status ?? 1,
+        success: false,
+      };
+    }
+
     return {
-      stdout: stdout.toString(),
-      stderr: "",
-      exitCode: 0,
-      success: true,
+      stdout: result.stdout?.toString() || "",
+      stderr: result.stderr?.toString() || "",
+      exitCode: result.status ?? 0,
+      success: result.status === 0,
     };
   } catch (err: unknown) {
     const execErr = err as {

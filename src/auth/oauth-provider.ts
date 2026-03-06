@@ -21,6 +21,9 @@ export class OAuthProvider implements AuthProvider {
   }
 
   async getAccessToken(): Promise<string> {
+    if (!this.accessToken && !this.refreshToken) {
+      throw new Error("No access token available");
+    }
     if (this.isTokenExpired()) {
       await this.refresh();
     }

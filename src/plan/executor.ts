@@ -49,6 +49,7 @@ export interface StepExecutionResult {
   error?: string;
   tokensUsed: number;
   toolCalls: number;
+  retryCount?: number;
 }
 
 export type StepExecutor = (
@@ -186,6 +187,19 @@ export class PlanExecutor {
           });
 
           if (hasPlanFailed(this.state.plan)) {
+            // Mark remaining steps as skipped
+            const currentIndex = executionOrder.indexOf(stepId);
+            for (let j = currentIndex + 1; j < executionOrder.length; j++) {
+              const remId = executionOrder[j];
+              const remStep = plan.steps.find(s => s.id === remId);
+              if (remStep && remStep.status === "pending") {
+                this.state.plan = updateStepStatus(
+                  this.state.plan,
+                  remId,
+                  "skipped"
+                );
+              }
+            }
             break;
           }
         }
@@ -345,6 +359,7 @@ export class PlanExecutor {
     let attempt = 0;
 
     while (attempt <= this.maxRetries) {
+      this.logger.debug(`Executing step ${step.id}, attempt ${attempt}, maxRetries ${this.maxRetries}`);
       if (this.aborted) {
         return {
           success: false,
@@ -387,38 +402,36 @@ export class PlanExecutor {
             this.state!.plan.budget.maxTokens - this.state!.tokenUsage.totalTokens,
         });
 
-        return result;
+        return { ...result, retryCount: attempt };
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        attempt++;
-        this.state!.retryCount++;
 
         if (
-          error instanceof RateLimitError ||
-          (error instanceof GlmMcpError && isRetryable(error))
+          attempt < this.maxRetries &&
+          (error instanceof RateLimitError ||
+            (error instanceof GlmMcpError && isRetryable(error)))
         ) {
-          if (attempt <= this.maxRetries) {
-            const delay = getRetryDelay(
-              error,
-              attempt,
-              this.baseRetryDelayMs,
-              this.maxRetryDelayMs
-            );
+          attempt++;
+          const delay = getRetryDelay(
+            error,
+            attempt,
+            this.baseRetryDelayMs,
+            this.maxRetryDelayMs
+          );
 
-            this.logger.warn(`Retrying step ${step.id} after ${delay}ms`, {
-              attempt,
-              maxRetries: this.maxRetries,
-            });
+          this.logger.warn(`Retrying step ${step.id} after ${delay}ms`, {
+            attempt,
+            maxRetries: this.maxRetries,
+          });
 
-            this.emitEvent("step_progress", sessionId, {
-              stepId: step.id,
-              message: `Retrying (attempt ${attempt}/${this.maxRetries})`,
-              retryDelay: delay,
-            });
+          this.emitEvent("step_progress", sessionId, {
+            stepId: step.id,
+            message: `Retrying (attempt ${attempt}/${this.maxRetries})`,
+            retryDelay: delay,
+          });
 
-            await this.sleep(delay);
-            continue;
-          }
+          await this.sleep(delay);
+          continue;
         }
 
         break;
@@ -430,6 +443,7 @@ export class PlanExecutor {
       error: lastError?.message ?? "Unknown error",
       tokensUsed: 0,
       toolCalls: 0,
+      retryCount: attempt,
     };
   }
 
@@ -456,7 +470,7 @@ export class PlanExecutor {
         durationMs: 0,
         tokensUsed: execResult.tokensUsed,
         toolCalls: execResult.toolCalls,
-        retryCount: this.state?.retryCount ?? 0,
+        retryCount: execResult.retryCount ?? 0,
       },
     };
   }

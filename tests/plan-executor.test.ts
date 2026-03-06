@@ -9,16 +9,10 @@ import { RateLimitError } from "../src/errors/index.js";
 describe("Plan Executor", () => {
   let executor: PlanExecutor;
   let eventBus: EventBus;
-  let capturedEvents: FeedbackEvent[];
 
   beforeEach(() => {
     resetEventBus();
     eventBus = getEventBus();
-    capturedEvents = [];
-
-    eventBus.on("*", (event: FeedbackEvent) => {
-      capturedEvents.push(event);
-    });
 
     executor = new PlanExecutor({
       eventBus,
@@ -58,6 +52,8 @@ describe("Plan Executor", () => {
 
     it("should emit events during execution", async () => {
       const plan = createSimplePlan();
+      const capturedEvents: FeedbackEvent[] = [];
+      eventBus.on("*", (e) => capturedEvents.push(e));
 
       executor.setDefaultExecutor(async (step) => ({
         success: true,
@@ -76,6 +72,8 @@ describe("Plan Executor", () => {
 
     it("should track token usage", async () => {
       const plan = createSimplePlan();
+      const capturedEvents: FeedbackEvent[] = [];
+      eventBus.on("*", (e) => capturedEvents.push(e));
 
       executor.setDefaultExecutor(async (step) => ({
         success: true,
@@ -105,7 +103,7 @@ describe("Plan Executor", () => {
 
       expect(result.steps[0].status).toBe("completed");
       expect(result.steps[1].status).toBe("failed");
-      expect(result.steps[2].status).toBe("pending");
+      expect(result.steps[2].status).toBe("skipped");
     });
 
     it("should skip steps when dependency fails", async () => {
@@ -209,7 +207,9 @@ describe("Plan Executor", () => {
 
   describe("retry logic", () => {
     it("should retry on rate limit error", async () => {
-      const plan = createSimplePlan();
+      const plan = createExecutionPlan("retry-plan", "Retry", [
+        createPlanStep("step-1", "Single step")
+      ]);
       let attempts = 0;
 
       executor.setDefaultExecutor(async () => {
@@ -227,7 +227,9 @@ describe("Plan Executor", () => {
     });
 
     it("should fail after max retries", async () => {
-      const plan = createSimplePlan();
+      const plan = createExecutionPlan("fail-plan", "Fail", [
+        createPlanStep("step-1", "Single step")
+      ]);
       let attempts = 0;
 
       executor.setDefaultExecutor(async () => {
@@ -242,8 +244,12 @@ describe("Plan Executor", () => {
     });
 
     it("should emit retry events", async () => {
-      const plan = createSimplePlan();
+      const plan = createExecutionPlan("events-plan", "Events", [
+        createPlanStep("step-1", "Single step")
+      ]);
       let attempts = 0;
+      const capturedEvents: FeedbackEvent[] = [];
+      eventBus.on("*", (e) => capturedEvents.push(e));
 
       executor.setDefaultExecutor(async () => {
         attempts++;
