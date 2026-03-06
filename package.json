@@ -1,6 +1,6 @@
 {
   "name": "@glitterkill/glm-mcp-ultimate",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "GLM MCP Ultimate - Allows Claude Code to delegate tasks to GLM (Zhipu AI) agents",
   "type": "module",
   "main": "dist/index.js",
