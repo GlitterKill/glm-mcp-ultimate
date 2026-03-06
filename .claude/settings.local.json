@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(GLM_API_KEY=test node:*)",
+      "mcp__glm__glm_chat",
+      "WebSearch",
+      "Bash(npm run:*)",
+      "mcp__glm__glm_agent_start",
+      "mcp__glm__glm_agent_step"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "glm"
+  ]
+}
