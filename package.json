@@ -1,16 +1,25 @@
 {
   "name": "glm-mcp-ultimate",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "GLM MCP Ultimate - Allows Claude Code to delegate tasks to GLM (Zhipu AI) agents",
   "type": "module",
   "main": "dist/index.js",
+  "bin": {
+    "glm-mcp-ultimate": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsc --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
