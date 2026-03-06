@@ -11,8 +11,6 @@ import {
   deleteSession,
   executeStep,
 } from "./agent/session.js";
-import { Command } from "commander";
-import { handleChat } from "./cli/handlers.js";
 
 async function startMcpServer() {
   const apiKey = process.env.GLM_API_KEY;
@@ -307,8 +305,8 @@ async function startMcpServer() {
   await server.connect(transport);
   console.error("GLM MCP Ultimate server started");
 }
-
-// --- CLI Entry Point ---
+import { Command } from "commander";
+import { handleChat, handleAgent, handleVision, handleEmbeddings } from "./cli/handlers.js";
 
 const program = new Command();
 
@@ -336,4 +334,30 @@ program
     handleChat(prompt, process.env.GLM_API_KEY, options.model, options.system).catch(console.error);
   });
 
+program
+  .command("agent <task>")
+  .description("Start an autonomous coding agent session")
+  .option("-d, --dir <directory>", "Working directory for the agent", process.cwd())
+  .option("-m, --model <model>", "GLM model to use", process.env.GLM_MODEL || "glm-5")
+  .action((task, options) => {
+    handleAgent(task, options.dir, process.env.GLM_API_KEY, options.model).catch(console.error);
+  });
+
+program
+  .command("vision <prompt> <imageUrl>")
+  .description("Analyze an image using GLM-4V")
+  .option("-m, --model <model>", "Vision model to use", "glm-4v-plus")
+  .action((prompt, imageUrl, options) => {
+    handleVision(prompt, imageUrl, process.env.GLM_API_KEY, options.model).catch(console.error);
+  });
+
+program
+  .command("embeddings <input>")
+  .description("Generate text embeddings")
+  .option("-m, --model <model>", "Embedding model", "embedding-3")
+  .action((input, options) => {
+    handleEmbeddings(input, process.env.GLM_API_KEY, options.model).catch(console.error);
+  });
+
 program.parse(process.argv);
+
