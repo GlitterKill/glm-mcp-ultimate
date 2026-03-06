@@ -1,5 +1,5 @@
 {
-  "name": "glm-mcp-ultimate",
+  "name": "@glitterkill/glm-mcp-ultimate",
   "version": "0.1.0",
   "description": "GLM MCP Ultimate - Allows Claude Code to delegate tasks to GLM (Zhipu AI) agents",
   "type": "module",
@@ -24,6 +24,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
     "better-sqlite3": "^12.6.2",
+    "commander": "^14.0.3",
     "zod": "^3.24.0"
   },
   "devDependencies": {
