@@ -3,7 +3,7 @@
     "glm": {
       "command": "node",
       "args": ["dist/index.js"],
-      "cwd": "C:\\Users\\mathv\\PhpstormProjects\\perso\\mcp-glm",
+      "cwd": "F:\\Claude\\projects\\glm-mcp-ultimate",
       "env": {
         "GLM_API_KEY": " "
       }
