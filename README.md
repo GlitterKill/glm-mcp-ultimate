@@ -14,7 +14,7 @@ The GLM MCP Ultimate server allows Claude Code and other MCP-compatible clients 
 ## Prerequisites
 
 - Node.js 18 or later
-- A GLM API key from [BigModel.ai](https://bigmodel.ai)
+- A GLM API key from [Z.ai - Recommended: GLM Coding Plan (10% off with this link)](https://z.ai/subscribe?ic=LBSWHTJM5T)
 
 ## Installation
 
