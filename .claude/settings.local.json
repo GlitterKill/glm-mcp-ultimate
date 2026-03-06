@@ -8,7 +8,8 @@
       "WebSearch",
       "Bash(npm run:*)",
       "mcp__glm__glm_agent_start",
-      "mcp__glm__glm_agent_step"
+      "mcp__glm__glm_agent_step",
+      "mcp__glm__glm_embeddings"
     ]
   },
   "enabledMcpjsonServers": [
