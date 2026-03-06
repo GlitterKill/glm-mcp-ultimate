@@ -21,7 +21,7 @@ The GLM MCP Ultimate server allows Claude Code and other MCP-compatible clients 
 
 Install the package globally:
 ```bash
-npm install -g glm-mcp-ultimate
+npm install -g @glitterkill/glm-mcp-ultimate
 ```
 
 ### Option 2: Manual Installation (Development)
@@ -54,7 +54,7 @@ Add the following entry to the `mcpServers` object:
   "mcpServers": {
     "glm": {
       "command": "npx",
-      "args": ["-y", "glm-mcp-ultimate"],
+      "args": ["-y", "@glitterkill/glm-mcp-ultimate"],
       "env": {
         "GLM_API_KEY": "your_api_key_here"
       }
@@ -106,3 +106,33 @@ When running in autonomous mode, the GLM agent can perform the following actions
 - `GLM_API_KEY`: Required. Your Zhipu AI API key (Z.ai Coding Plan keys supported).
 - `GLM_MODEL`: Optional. The default GLM model to use (defaults to `glm-5`).
 - `GLM_API_BASE`: Optional. Override the base URL for the GLM API (defaults to `https://api.z.ai/api/coding/paas/v4`).
+
+## CLI Command Usage
+
+In addition to acting as an MCP server, GLM MCP Ultimate provides direct CLI commands for terminal users. This allows you to interact with the models without needing an MCP client like Claude Code.
+
+**Global Installation:**
+If you installed the package globally, you can use the `glm-mcp-ultimate` command directly:
+
+```bash
+# General Chat
+glm-mcp-ultimate chat "Write a python script to reverse a string"
+
+# Start Autonomous Agent
+glm-mcp-ultimate agent "Refactor the authentication module" -d ./src/auth
+
+# Image Analysis
+glm-mcp-ultimate vision "Describe this image" https://example.com/image.jpg
+
+# Generate Embeddings
+glm-mcp-ultimate embeddings "Hello world"
+```
+
+**Using NPX:**
+If you prefer not to install globally, you can use `npx`:
+
+```bash
+npx -y @glitterkill/glm-mcp-ultimate chat "What is the capital of France?"
+```
+
+*Note: Ensure your `GLM_API_KEY` environment variable is set before running these commands.*
