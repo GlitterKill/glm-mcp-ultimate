@@ -45,23 +45,56 @@ export function executeToolCall(
       const fileContent = readFileSync(fullPath, "utf-8");
       const oldText = args.old_text as string;
       const newText = args.new_text as string;
+      const occurrence = args.occurrence as number | undefined;
+      const contextBefore = args.context_before as string | undefined;
+      const contextAfter = args.context_after as string | undefined;
 
-      if (!fileContent.includes(oldText)) {
-        return `Error: Could not find the specified text in ${fullPath}. Make sure old_text matches exactly (including whitespace).`;
+      let targetText = oldText;
+      if (contextBefore) targetText = contextBefore + targetText;
+      if (contextAfter) targetText = targetText + contextAfter;
+
+      const parts = fileContent.split(targetText);
+      if (parts.length === 1) {
+        return `Error: Could not find the specified text in ${fullPath}. Make sure old_text and context match exactly (including whitespace).`;
       }
 
-      const updatedContent = fileContent.replace(oldText, newText);
+      if (parts.length > 2 && occurrence === undefined) {
+        return `Error: Multiple occurrences found (${parts.length - 1}). Please provide 'occurrence' or more 'context' to disambiguate.`;
+      }
+
+      const index = occurrence !== undefined ? occurrence : 1;
+      if (index < 1 || index >= parts.length) {
+        return `Error: Invalid occurrence index ${index}. Total occurrences: ${parts.length - 1}.`;
+      }
+
+      // Reconstruct content by replacing only the specified occurrence
+      let updatedContent = "";
+      for (let i = 0; i < parts.length; i++) {
+        updatedContent += parts[i];
+        if (i < parts.length - 1) {
+          if (i + 1 === index) {
+            // Replace this occurrence
+            const replacement = (contextBefore || "") + newText + (contextAfter || "");
+            updatedContent += replacement;
+          } else {
+            // Keep original
+            updatedContent += targetText;
+          }
+        }
+      }
+
       writeFileSync(fullPath, updatedContent, "utf-8");
       return `File edited successfully: ${fullPath}`;
     }
 
     case "run_command": {
       const command = args.command as string;
+      const timeout = (args.timeout as number) || 60000;
       try {
         const output = execSync(command, {
           cwd: workingDir,
           encoding: "utf-8",
-          timeout: 60000,
+          timeout: timeout,
           maxBuffer: 1024 * 1024,
           stdio: ["pipe", "pipe", "pipe"],
         });
@@ -71,7 +104,10 @@ export function executeToolCall(
         }
         return result || "(no output)";
       } catch (err: unknown) {
-        const execErr = err as { stderr?: string; stdout?: string; status?: number };
+        const execErr = err as { stderr?: string; stdout?: string; status?: number; code?: string };
+        if (execErr.code === "ETIMEDOUT") {
+          return `Command failed: Timed out after ${timeout}ms`;
+        }
         const stderr = execErr.stderr || "";
         const stdout = execErr.stdout || "";
         return `Command failed (exit code ${execErr.status}):\nstdout: ${stdout}\nstderr: ${stderr}`;

@@ -4,6 +4,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { GlmClient } from "./glm-client.js";
+import { runMigrations } from "./db/migrations.js";
 import {
   createSession,
   getSession,
@@ -299,6 +300,9 @@ server.tool(
 // --- Start server ---
 
 async function main() {
+  // Ensure database is ready
+  runMigrations();
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("MCP GLM server started");

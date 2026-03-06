@@ -2,7 +2,10 @@ import { randomUUID } from "crypto";
 import { GlmClient } from "../glm-client.js";
 import { AGENT_TOOLS } from "./tools.js";
 import { executeToolCall } from "./executor.js";
+import { SessionRepository } from "../db/session-repository.js";
 import type { AgentSession, AgentStep, GlmMessage } from "../types.js";
+
+const repository = new SessionRepository();
 
 const SYSTEM_PROMPT = `You are an autonomous coding agent. You have access to tools to read, write, and edit files, run shell commands, list files, and search code.
 
@@ -21,13 +24,12 @@ Important:
 - Be careful with destructive operations.
 - Write clean, well-structured code.`;
 
-const sessions = new Map<string, AgentSession>();
-
 export function createSession(
   task: string,
   workingDir: string,
   model: string
 ): AgentSession {
+  const now = Date.now();
   const session: AgentSession = {
     id: randomUUID(),
     task,
@@ -42,17 +44,18 @@ export function createSession(
     ],
     status: "ready",
     steps: [],
+    createdAt: now,
+    updatedAt: now,
   };
-  sessions.set(session.id, session);
-  return session;
+  return repository.create(session);
 }
 
 export function getSession(sessionId: string): AgentSession | undefined {
-  return sessions.get(sessionId);
+  return repository.getById(sessionId) || undefined;
 }
 
 export function deleteSession(sessionId: string): void {
-  sessions.delete(sessionId);
+  repository.delete(sessionId);
 }
 
 export async function executeStep(
@@ -64,6 +67,7 @@ export async function executeStep(
   status: "needs_more_steps" | "completed" | "error";
 }> {
   session.status = "running";
+  repository.updateStatus(session.id, "running");
 
   try {
     const response = await client.chat({
@@ -76,6 +80,16 @@ export async function executeStep(
 
     const choice = response.choices[0];
     const message = choice.message;
+
+    // Update token usage
+    if (response.usage) {
+      session.tokenUsage = {
+        promptTokens: response.usage.prompt_tokens,
+        completionTokens: response.usage.completion_tokens,
+        totalTokens: response.usage.total_tokens,
+      };
+      repository.updateTokenUsage(session.id, session.tokenUsage);
+    }
 
     // Add assistant message to history
     session.messages.push(message);
@@ -93,11 +107,12 @@ export async function executeStep(
         );
 
         // Add tool result to conversation
-        session.messages.push({
+        const toolMessage: GlmMessage = {
           role: "tool",
           tool_call_id: toolCall.id,
           content: result,
-        });
+        };
+        session.messages.push(toolMessage);
 
         const step: AgentStep = {
           action: `${toolCall.function.name}(${summarizeArgs(args)})`,
@@ -110,6 +125,12 @@ export async function executeStep(
           timestamp: Date.now(),
         };
         session.steps.push(step);
+        
+        // Persist step and message immediately
+        repository.addStep(session.id, step);
+        repository.addMessage(session.id, message, session.messages.length - 2);
+        repository.addMessage(session.id, toolMessage, session.messages.length - 1);
+
         results.push(
           `${toolCall.function.name}: ${step.result}`
         );
@@ -117,6 +138,7 @@ export async function executeStep(
         // Check if task is complete
         if (result.startsWith("TASK_COMPLETE:")) {
           session.status = "completed";
+          repository.updateStatus(session.id, "completed");
           return {
             action: "task_complete",
             details: result.replace("TASK_COMPLETE: ", ""),
@@ -124,6 +146,9 @@ export async function executeStep(
           };
         }
       }
+
+      // Update full session to sync timestamps and potentially other changes
+      repository.update(session);
 
       return {
         action: message.tool_calls
@@ -139,6 +164,8 @@ export async function executeStep(
 
     // If GLM responded with text (no tool calls), it might be thinking or done
     if (message.content) {
+      repository.addMessage(session.id, message, session.messages.length - 1);
+      
       // Check if it seems like GLM is done
       if (
         message.content.toLowerCase().includes("task complete") ||
@@ -146,6 +173,7 @@ export async function executeStep(
         choice.finish_reason === "stop"
       ) {
         session.status = "completed";
+        repository.updateStatus(session.id, "completed");
         return {
           action: "text_response",
           details: message.content,
@@ -153,6 +181,7 @@ export async function executeStep(
         };
       }
 
+      repository.update(session);
       return {
         action: "text_response",
         details: message.content,
@@ -161,6 +190,7 @@ export async function executeStep(
     }
 
     session.status = "error";
+    repository.updateStatus(session.id, "error");
     return {
       action: "error",
       details: "GLM returned an empty response",
@@ -168,6 +198,7 @@ export async function executeStep(
     };
   } catch (err) {
     session.status = "error";
+    repository.updateStatus(session.id, "error");
     const errorMessage = err instanceof Error ? err.message : String(err);
     return {
       action: "error",

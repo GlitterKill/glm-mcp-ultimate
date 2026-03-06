@@ -46,7 +46,7 @@ export const AGENT_TOOLS: GlmTool[] = [
     function: {
       name: "edit_file",
       description:
-        "Edit a file by replacing a specific text block with new text. Read the file first to know the exact text to replace.",
+        "Edit a file by replacing a specific text block with new text. If the text appears multiple times, use occurrence or context to disambiguate.",
       parameters: {
         type: "object",
         properties: {
@@ -61,6 +61,18 @@ export const AGENT_TOOLS: GlmTool[] = [
           new_text: {
             type: "string",
             description: "The new text to replace the old text with",
+          },
+          occurrence: {
+            type: "number",
+            description: "If the old_text appears multiple times, which occurrence to replace (1-based index).",
+          },
+          context_before: {
+            type: "string",
+            description: "Optional text appearing immediately before old_text to help identify the correct location.",
+          },
+          context_after: {
+            type: "string",
+            description: "Optional text appearing immediately after old_text to help identify the correct location.",
           },
         },
         required: ["path", "old_text", "new_text"],
@@ -79,6 +91,10 @@ export const AGENT_TOOLS: GlmTool[] = [
           command: {
             type: "string",
             description: "The shell command to execute",
+          },
+          timeout: {
+            type: "number",
+            description: "Optional timeout in milliseconds (default: 60000)",
           },
         },
         required: ["command"],
