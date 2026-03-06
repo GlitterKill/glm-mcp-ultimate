@@ -3,7 +3,7 @@ import type { AuthProvider, AuthConfig, OAuthTokenResponse } from "./types.js";
 export class OAuthProvider implements AuthProvider {
   private accessToken?: string;
   private expiresAt?: number;
-  private refreshToken?: string;
+  private storedRefreshToken?: string;
   private readonly clientId: string;
   private readonly clientSecret: string;
   private readonly tokenUrl: string;
@@ -17,11 +17,11 @@ export class OAuthProvider implements AuthProvider {
     this.tokenUrl = config.tokenUrl;
     this.accessToken = config.accessToken;
     this.expiresAt = config.expiresAt;
-    this.refreshToken = config.refreshToken;
+    this.storedRefreshToken = config.refreshToken;
   }
 
   async getAccessToken(): Promise<string> {
-    if (!this.accessToken && !this.refreshToken) {
+    if (!this.accessToken && !this.storedRefreshToken) {
       throw new Error("No access token available");
     }
     if (this.isTokenExpired()) {
@@ -43,7 +43,7 @@ export class OAuthProvider implements AuthProvider {
   }
 
   async refresh(): Promise<void> {
-    if (!this.refreshToken) {
+    if (!this.storedRefreshToken) {
       throw new Error("No refresh token available");
     }
 
@@ -54,7 +54,7 @@ export class OAuthProvider implements AuthProvider {
       },
       body: new URLSearchParams({
         grant_type: "refresh_token",
-        refresh_token: this.refreshToken,
+        refresh_token: this.storedRefreshToken,
         client_id: this.clientId,
         client_secret: this.clientSecret,
       }).toString(),
@@ -71,12 +71,18 @@ export class OAuthProvider implements AuthProvider {
       this.expiresAt = Date.now() + data.expires_in * 1000;
     }
     if (data.refresh_token) {
-      this.refreshToken = data.refresh_token;
+      this.storedRefreshToken = data.refresh_token;
     }
   }
 
+  // Alias for refresh() to match AuthProvider interface method naming convention if needed
+  // though refresh() is already defined as async above.
+  async refreshToken(): Promise<void> {
+    return this.refresh();
+  }
+
   setRefreshToken(token: string): void {
-    this.refreshToken = token;
+    this.storedRefreshToken = token;
   }
 
   getExpiresAt(): number | undefined {

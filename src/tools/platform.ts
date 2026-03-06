@@ -6,6 +6,7 @@ import {
   existsSync,
   mkdirSync,
   writeFileSync,
+  type Dirent,
 } from "fs";
 import { resolve, dirname, join, sep, normalize, isAbsolute } from "path";
 
@@ -66,9 +67,9 @@ export function findFiles(
   function walk(dir: string, depth: number): void {
     if (depth > maxDepth || results.length >= maxResults) return;
 
-    let entries: ReturnType<typeof readdirSync>;
+    let entries: Dirent[];
     try {
-      entries = readdirSync(dir, { withFileTypes: true });
+      entries = readdirSync(dir, { withFileTypes: true }) as Dirent[];
     } catch {
       return;
     }
@@ -173,9 +174,9 @@ export function searchInFiles(
   function walk(dir: string): void {
     if (results.length >= maxResults) return;
 
-    let entries: ReturnType<typeof readdirSync>;
+    let entries: Dirent[];
     try {
-      entries = readdirSync(dir, { withFileTypes: true });
+      entries = readdirSync(dir, { withFileTypes: true }) as Dirent[];
     } catch {
       return;
     }

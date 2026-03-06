@@ -19,7 +19,7 @@ export interface LoggerOptions {
 }
 
 export class Logger {
-  private readonly level: LogLevel;
+  private level: LogLevel;
   private readonly name: string;
   private readonly output: (entry: LogEntry) => void;
 
@@ -71,7 +71,7 @@ export class Logger {
   }
 
   setLevel(level: LogLevel): void {
-    (this as { level: LogLevel }).level = level;
+    this.level = level;
   }
 
   getLevel(): LogLevel {

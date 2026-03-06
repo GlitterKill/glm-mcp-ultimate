@@ -23,7 +23,7 @@ class EventBus extends EventEmitter {
     return EventBus.instance;
   }
 
-  emit<T extends FeedbackEvent>(event: T): boolean {
+  emitFeedback<T extends FeedbackEvent>(event: T): boolean {
     this.eventCounts[event.type] = (this.eventCounts[event.type] || 0) + 1;
     const result = super.emit(event.type, event);
     super.emit("*", event);
@@ -51,7 +51,7 @@ class EventBus extends EventEmitter {
     return super.off(eventType, handler as (...args: unknown[]) => void);
   }
 
-  async emitAsync<T extends FeedbackEvent>(event: T): Promise<boolean> {
+  async emitFeedbackAsync<T extends FeedbackEvent>(event: T): Promise<boolean> {
     this.eventCounts[event.type] = (this.eventCounts[event.type] || 0) + 1;
     const listeners = this.listeners(event.type) as EventHandler<T>[];
     
@@ -64,7 +64,7 @@ class EventBus extends EventEmitter {
         try {
           await listener(event);
         } catch (error) {
-          this.emit({
+          this.emitFeedback({
             type: "session_error",
             timestamp: Date.now(),
             sessionId: event.sessionId,

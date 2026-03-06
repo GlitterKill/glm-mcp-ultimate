@@ -29,7 +29,7 @@ describe("EventBus", () => {
     });
   });
 
-  describe("emit and on", () => {
+  describe("emitFeedback and on", () => {
     it("should emit and receive events", () => {
       const handler = vi.fn();
       eventBus.on("session_started", handler);
@@ -37,7 +37,7 @@ describe("EventBus", () => {
       const event = createFeedbackEvent("session_started", "session-1", {
         task: "test",
       });
-      eventBus.emit(event);
+      eventBus.emitFeedback(event);
 
       expect(handler).toHaveBeenCalledTimes(1);
       expect(handler).toHaveBeenCalledWith(event);
@@ -51,7 +51,7 @@ describe("EventBus", () => {
       eventBus.on("session_started", handler2);
 
       const event = createFeedbackEvent("session_started", "session-1", {});
-      eventBus.emit(event);
+      eventBus.emitFeedback(event);
 
       expect(handler1).toHaveBeenCalledTimes(1);
       expect(handler2).toHaveBeenCalledTimes(1);
@@ -62,7 +62,7 @@ describe("EventBus", () => {
       eventBus.on("session_started", handler);
 
       const event = createFeedbackEvent("step_completed", "session-1", {});
-      eventBus.emit(event);
+      eventBus.emitFeedback(event);
 
       expect(handler).not.toHaveBeenCalled();
     });
@@ -80,8 +80,8 @@ describe("EventBus", () => {
         count: 2,
       });
 
-      eventBus.emit(event1);
-      eventBus.emit(event2);
+      eventBus.emitFeedback(event1);
+      eventBus.emitFeedback(event2);
 
       expect(handler).toHaveBeenCalledTimes(1);
       expect(handler).toHaveBeenCalledWith(event1);
@@ -95,7 +95,7 @@ describe("EventBus", () => {
       eventBus.off("session_started", handler);
 
       const event = createFeedbackEvent("session_started", "session-1", {});
-      eventBus.emit(event);
+      eventBus.emitFeedback(event);
 
       expect(handler).not.toHaveBeenCalled();
     });
@@ -106,7 +106,7 @@ describe("EventBus", () => {
     });
   });
 
-  describe("emitAsync", () => {
+  describe("emitFeedbackAsync", () => {
     it("should await async handlers", async () => {
       const results: number[] = [];
       
@@ -120,7 +120,7 @@ describe("EventBus", () => {
       });
 
       const event = createFeedbackEvent("session_started", "session-1", {});
-      await eventBus.emitAsync(event);
+      await eventBus.emitFeedbackAsync(event);
 
       expect(results).toContain(1);
       expect(results).toContain(2);
@@ -128,14 +128,14 @@ describe("EventBus", () => {
 
     it("should return false when no listeners", async () => {
       const event = createFeedbackEvent("nonexistent", "session-1", {});
-      const result = await eventBus.emitAsync(event);
+      const result = await eventBus.emitFeedbackAsync(event);
       expect(result).toBe(false);
     });
 
     it("should return true when listeners exist", async () => {
       eventBus.on("session_started", () => {});
       const event = createFeedbackEvent("session_started", "session-1", {});
-      const result = await eventBus.emitAsync(event);
+      const result = await eventBus.emitFeedbackAsync(event);
       expect(result).toBe(true);
     });
 
@@ -149,7 +149,7 @@ describe("EventBus", () => {
       eventBus.on("session_error", errorHandler);
 
       const event = createFeedbackEvent("session_started", "session-1", {});
-      await eventBus.emitAsync(event);
+      await eventBus.emitFeedbackAsync(event);
 
       expect(errorHandler).toHaveBeenCalled();
     });
@@ -166,9 +166,9 @@ describe("EventBus", () => {
     });
 
     it("should return event counts", () => {
-      eventBus.emit(createFeedbackEvent("session_started", "s1", {}));
-      eventBus.emit(createFeedbackEvent("session_started", "s1", {}));
-      eventBus.emit(createFeedbackEvent("step_completed", "s1", {}));
+      eventBus.emitFeedback(createFeedbackEvent("session_started", "s1", {}));
+      eventBus.emitFeedback(createFeedbackEvent("session_started", "s1", {}));
+      eventBus.emitFeedback(createFeedbackEvent("step_completed", "s1", {}));
 
       const stats = eventBus.getStats();
       expect(stats.eventCounts["session_started"]).toBe(2);
@@ -178,7 +178,7 @@ describe("EventBus", () => {
 
   describe("resetStats", () => {
     it("should clear event counts", () => {
-      eventBus.emit(createFeedbackEvent("session_started", "s1", {}));
+      eventBus.emitFeedback(createFeedbackEvent("session_started", "s1", {}));
       eventBus.resetStats();
       
       const stats = eventBus.getStats();
@@ -190,7 +190,7 @@ describe("EventBus", () => {
       eventBus.on("session_started", handler);
       eventBus.resetStats();
       
-      eventBus.emit(createFeedbackEvent("session_started", "s1", {}));
+      eventBus.emitFeedback(createFeedbackEvent("session_started", "s1", {}));
       expect(handler).toHaveBeenCalled();
     });
   });
@@ -203,7 +203,7 @@ describe("EventBus", () => {
       resetEventBus();
       eventBus = getEventBus();
       
-      eventBus.emit(createFeedbackEvent("session_started", "s1", {}));
+      eventBus.emitFeedback(createFeedbackEvent("session_started", "s1", {}));
       expect(handler).not.toHaveBeenCalled();
     });
   });

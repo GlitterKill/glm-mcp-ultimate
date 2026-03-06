@@ -480,7 +480,7 @@ export class PlanExecutor {
     sessionId: string,
     payload: Record<string, unknown>
   ): void {
-    this.eventBus.emit({
+    this.eventBus.emitFeedback({
       type,
       timestamp: Date.now(),
       sessionId,

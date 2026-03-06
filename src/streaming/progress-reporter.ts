@@ -53,7 +53,7 @@ export class McpProgressReporter {
       eta,
     };
 
-    this.emit("step_progress", payload);
+    this.emitEvent("step_progress", payload as unknown as Record<string, unknown>);
     return payload;
   }
 
@@ -72,7 +72,7 @@ export class McpProgressReporter {
       remainingBudget,
     };
 
-    this.emit("token_usage", payload);
+    this.emitEvent("token_usage", payload as unknown as Record<string, unknown>);
     return payload;
   }
 
@@ -81,7 +81,7 @@ export class McpProgressReporter {
     const errorName = error instanceof Error ? error.name : "Error";
     const errorStack = error instanceof Error ? error.stack : undefined;
 
-    this.emit("session_error", {
+    this.emitEvent("session_error", {
       error: errorMessage,
       name: errorName,
       stack: errorStack,
@@ -102,7 +102,7 @@ export class McpProgressReporter {
       this.state.message = message;
     }
 
-    this.emit("step_progress", {
+    this.emitEvent("step_progress", {
       percent: this.state.percent,
       message: message ?? this.state.message,
       currentStep: this.state.currentStep,
@@ -125,14 +125,14 @@ export class McpProgressReporter {
   }
 
   reportToolCall(toolName: string, args: Record<string, unknown>): void {
-    this.emit("tool_called", {
+    this.emitEvent("tool_called", {
       toolName,
       args,
     });
   }
 
   reportToolResult(callId: string, result: string, isError?: boolean): void {
-    this.emit("tool_result", {
+    this.emitEvent("tool_result", {
       callId,
       result,
       isError: isError ?? false,
@@ -141,19 +141,19 @@ export class McpProgressReporter {
 
   reportStepStarted(stepId: string, description: string): void {
     this.currentStepId = stepId;
-    this.emit("step_started", { stepId, description }, stepId);
+    this.emitEvent("step_started", { stepId, description }, stepId);
   }
 
   reportStepCompleted(stepId: string, result?: unknown): void {
-    this.emit("step_completed", { stepId, result }, stepId);
+    this.emitEvent("step_completed", { stepId, result }, stepId);
   }
 
   reportStepFailed(stepId: string, error: Error | string): void {
     const errorMessage = error instanceof Error ? error.message : error;
-    this.emit("step_failed", { stepId, error: errorMessage }, stepId);
+    this.emitEvent("step_failed", { stepId, error: errorMessage }, stepId);
   }
 
-  private emit(
+  private emitEvent(
     type: FeedbackEventType,
     payload: Record<string, unknown>,
     overrideStepId?: string
@@ -167,7 +167,7 @@ export class McpProgressReporter {
       payload,
     };
 
-    this.eventBus.emit(event);
+    this.eventBus.emitFeedback(event);
   }
 }
 
